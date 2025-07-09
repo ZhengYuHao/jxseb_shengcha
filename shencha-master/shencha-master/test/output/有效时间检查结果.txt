@@ -1,0 +1,12 @@
+有效时间范围: 1999-12-21 至 2025-05-29
+
+有效专利:
+{'专利号': 'LUS06761', '申请日期': '2024-04-01', '授权日期': 'N/A', '发明人': 'ZHANG Uchao, GE Peng', '受让人': 'NANCHANG INSTITUTE OF TECHNOLOGY', '文件名': '14.（张利超国际发明专利）Ein ökologisch sauberes integriertes Managementsystem für ein kleines Wassereinzugsgebiet.pdf', '类型': '专利'}
+{'专利号': '202310875944.2', '申请日期': '2023-07-18', '授权日期': 'N/A', '发明人': '高静', '受让人': '南昌大学', '文件名': '一种基于改进近似消息传递的心电信号重构方法.pdf', '类型': '专利'}
+{'专利号': 'F/PT/NC/2024/10607', '申请日期': '2024-01-12', '授权日期': 'N/A', '发明人': 'CHENG, Xiangping, HU, Qiang, QIU, Yijian', '受让人': 'Institute of Applied Physics, Jiangxi Academy of Sciences', '文件名': '尼日利亚发明专利证书.pdf', '类型': '专利'}
+
+有效论文:
+{'标题': 'Report of IRF2BP1 as a novel partner of RARA in variant acute promyelocytic leukemia', '作者': 'N/A', '期刊': 'American Journal of Hematology', 'year': 2024, 'DOI': '10.1002/ajh.27272', 'received_date': '2023-12-04', 'accepted_date': '2024-02-18', 'published_date': 'N/A', '文件名': '1.张长林-论文-共通讯-American J Hematol - 2024 - Jiang - Report of IRF2BP1 as a novel partner of RARA in variant acute promyelocytic leukemia.pdf', '类型': '论文'}
+
+统计信息:
+{'patent': {'total': 4, 'in_range': 3}, 'paper': {'total': 4, 'in_range': 1}}
