@@ -26,13 +26,16 @@ async def pdf_text_reader(temp_file_path: str) -> str:
         with pdfplumber.open(temp_file_path) as pdf:
             all_text = ""
             for page in pdf.pages:
-                text0 = page.extract_text()
-                all_text += text0 + "\n"
+                text = page.extract_text()
+                if text:  # Only append if text was extracted
+                    all_text += text + "\n"
         return all_text
+    except FileNotFoundError as e:
+        print(f"PDF文件未找到: {e}")
+        raise
     except Exception as e:
         print(f"PDF解析失败: {e}")
         return ""
-
 
 async def image_to_base64(image_path: str) -> str:
     """
@@ -61,14 +64,16 @@ async def extract_text_from_images(image_paths: list) -> str:
         str: 提取的文本内容。
     """
     all_text = ""
+    api_key = get_llm_key()
+    url = "https://api.rcouyi.com/v1/chat/completions"
     for image_path in image_paths:
         base64_image = await image_to_base64(image_path)
-        api_key = get_llm_key()
+        
         headers = {
             "Content-Type": "application/json",
             "Authorization": f"Bearer {api_key}"
         }
-        url = "https://api.rcouyi.com/v1/chat/completions"
+        
         data = {
             'model': "gpt-4.1",
             'messages': [
@@ -137,11 +142,17 @@ async def pdf_pic_reader(temp_file_path: str) -> str:
     except Exception as e:
         print(f"PDF 转图片失败: {e}")
         return "PDF 转图片失败，无法提取文本内容。"
+    finally:
+        pdf_document.close()
+    
 
     # 使用 GPT 模型对图片进行 OCR 识别
     try:
         all_text = await extract_text_from_images(image_paths)
         return all_text
-    except Exception as e:
-        print(f"OCR 识别失败: {e}")
+    except FileNotFoundError as e:
+        print(f"图片文件未找到: {e}")
+        return "OCR 识别失败，无法提取文本内容。"
+    except PermissionError as e:
+        print(f"权限不足，无法访问图片文件: {e}")
         return "OCR 识别失败，无法提取文本内容。"

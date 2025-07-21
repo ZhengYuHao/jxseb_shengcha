@@ -4,8 +4,7 @@
 
 ### 智能体
 
-复制.nev.example为.env
-并按照格式填写api_key
+复制.env.example为.env并按照格式填写api_key
 
 
 ### 后端

@@ -20,28 +20,61 @@ def create_output_dir():
     if not os.path.exists(OUTPUT_DIR):
         os.makedirs(OUTPUT_DIR)
 
+import os
+import logging
+import asyncio
+from typing import List
+from io import BytesIO
+from fastapi import UploadFile
+import aiofiles
+
+# 假设 DOCS_DIR 已在外部定义
+# DOCS_DIR = "your_directory_path"
 
 async def generate_test_files() -> List[UploadFile]:
     """生成测试用的UploadFile列表"""
-    files = [os.path.join(DOCS_DIR, f) for f in os.listdir(DOCS_DIR)
-             if os.path.isfile(os.path.join(DOCS_DIR, f))]
+    try:
+        # 检查 DOCS_DIR 是否存在且为目录
+        if not os.path.isdir(DOCS_DIR):
+            logging.warning(f"目录 {DOCS_DIR} 不存在或不是目录。")
+            return []
 
-    if not files:
-        print(f"目录 {DOCS_DIR} 中没有文件。")
+        # 获取所有文件路径
+        files = [
+            full_path
+            for f in os.listdir(DOCS_DIR)
+            if (full_path := os.path.join(DOCS_DIR, f)) and os.path.isfile(full_path)
+        ]
+
+        if not files:
+            logging.warning(f"目录 {DOCS_DIR} 中没有文件。")
+            return []
+
+        upload_files = []
+        for file_path in files:
+            try:
+                async with aiofiles.open(file_path, "rb") as f:
+                    file_content = await f.read()
+                # 过滤空文件
+                if not file_content:
+                    logging.warning(f"文件 {file_path} 为空，已跳过。")
+                    continue
+                file_like = BytesIO(file_content)
+                upload_files.append(
+                    UploadFile(
+                        filename=os.path.basename(file_path),
+                        file=file_like
+                    )
+                )
+            except (OSError, IOError, MemoryError) as e:
+                logging.error(f"读取文件 {file_path} 时发生错误: {e}")
+                continue
+
+        return upload_files
+
+    except Exception as e:
+        logging.error(f"生成测试文件时发生错误: {e}")
         return []
-
-    upload_files = []
-    for file_path in files:
-        with open(file_path, "rb") as f:
-            file_content = f.read()
-        file_like = BytesIO(file_content)
-        upload_files.append(
-            UploadFile(
-                filename=os.path.basename(file_path),
-                file=file_like
-            )
-        )
-    return upload_files
 
 
 class ValidityCheckRequest(BaseModel):
@@ -64,6 +97,11 @@ async def test_process_files(files: List[UploadFile] = File(...)) -> Dict[str, D
     # 调用原函数
     response = await process_files(files)
 
+    # 验证响应
+    assert response.results is not None, "Results should not be None"
+    assert response.data is not None, "Data should not be None"
+    assert len(response.results) == len(files), f"Expected {len(files)} results, got {len(response.results)}"
+
     # 保存结果为JSON格式以便后续使用
     result_data = {
         "results": response.results,
@@ -74,9 +112,8 @@ async def test_process_files(files: List[UploadFile] = File(...)) -> Dict[str, D
         json.dump(result_data, f, ensure_ascii=False, indent=2)
 
     print(f"上传结果已保存到 {UPLOAD_RESULTS_FILE}")
+    print(f"✅ 成功处理 {len(response.results)} 个文件")
     return response.data  # 返回结构化数据供后续测试使用
-
-
 async def load_structured_data() -> Dict[str, Dict[str, Any]]:
     """从保存的文件中加载结构化数据"""
     if not os.path.exists(UPLOAD_RESULTS_FILE):
@@ -111,6 +148,12 @@ async def test_check_validity(request: ValidityCheckRequest):
     print(f"有效性检查结果已保存到 {VALIDITY_RESULTS_FILE}")
 
 
+import logging
+from datetime import datetime
+
+# 配置日志
+logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s")
+
 async def main():
     """主测试函数"""
     # 1. 测试文件上传处理并获取结构化数据
@@ -120,40 +163,55 @@ async def main():
 
     structured_data = await test_process_files(test_files)
     if not structured_data:
-        print("未能获取结构化数据")
+        logging.error("未能获取结构化数据")
         return
 
     # 2. 准备有效性检查请求
-    print("\n准备有效性检查...")
-    print("请输入起始时间 (格式: YYYY-MM-DD):")
-    start_date = input().strip()
-    print("请输入结束时间 (格式: YYYY-MM-DD):")
-    end_date = input().strip()
+    logging.info("\n准备有效性检查...")
 
-    # 验证日期
+    # 获取并验证日期输入
     try:
+        start_date = input("请输入起始时间 (格式: YYYY-MM-DD): ").strip()
+        end_date = input("请输入结束时间 (格式: YYYY-MM-DD): ").strip()
         start_dt = parse_date(start_date)
         end_dt = parse_date(end_date)
-        if not all([start_dt, end_dt]):
-            raise ValueError("日期格式错误")
+
         if start_dt > end_dt:
             raise ValueError("起始日期不能晚于结束日期")
     except ValueError as e:
-        print(f"日期输入错误: {e}")
+        logging.error(f"日期输入错误: {e}")
+        return
+    except Exception as e:
+        logging.error(f"未知错误: {e}")
         return
 
     # 3. 创建请求对象
-    request = ValidityCheckRequest(
-        start_date=start_date,
-        end_date=end_date,
-        docs={
-            "patentData": structured_data,
-            "paperData": structured_data
-        }
-    )
+    try:
+        request = ValidityCheckRequest(
+            start_date=start_date,
+            end_date=end_date,
+            docs={
+                "patentData": structured_data,
+                "paperData": structured_data
+            }
+        )
+    except Exception as e:
+        logging.error(f"请求对象创建失败: {e}")
+        return
 
     # 4. 测试有效性检查
-    await test_check_validity(request)
+    try:
+        await test_check_validity(request)
+    except Exception as e:
+        logging.error(f"有效性检查失败: {e}")
+        return
+
+def parse_date(date_str: str) -> datetime:
+    """解析日期字符串为 datetime 对象"""
+    try:
+        return datetime.strptime(date_str, "%Y-%m-%d")
+    except ValueError as e:
+        raise ValueError(f"日期格式错误: {date_str}") from e
 
 
 if __name__ == "__main__":

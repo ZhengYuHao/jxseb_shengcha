@@ -36,10 +36,9 @@ def get_llm_key():
         return random.choice(key_list)
 
     except Exception as e:
-        # 打印错误并回退到单个 OPENAI_KEY
-        print(f"获取 OpenAI API Key 时出错：{e}")
+        # 记录错误但不暴露敏感信息
+        print("获取 OpenAI API Key 时出错，回退到单个 OPENAI_KEY")
         return os.getenv("OPENAI_KEY")
-
 # =========================
 # 测试示例（可选）：
 # =========================
