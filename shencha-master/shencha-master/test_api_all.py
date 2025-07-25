@@ -16,7 +16,9 @@ VALIDITY_RESULTS_FILE = os.path.join(OUTPUT_DIR, "有效时间检查结果.txt")
 
 
 def create_output_dir():
-    """确保输出目录存在"""
+    """
+    Ensure that the output directory exists, creating it if necessary.
+    """
     if not os.path.exists(OUTPUT_DIR):
         os.makedirs(OUTPUT_DIR)
 
@@ -32,7 +34,14 @@ import aiofiles
 # DOCS_DIR = "your_directory_path"
 
 async def generate_test_files() -> List[UploadFile]:
-    """生成测试用的UploadFile列表"""
+    """
+    Asynchronously generates a list of UploadFile objects from files in the DOCS_DIR directory.
+    
+    Scans the DOCS_DIR directory for files, reads each file asynchronously, and creates an UploadFile instance for each non-empty file. Files that are empty or cannot be read due to errors are skipped. Returns an empty list if the directory does not exist, contains no files, or if an error occurs during processing.
+    
+    Returns:
+        List[UploadFile]: A list of UploadFile objects representing the non-empty files in DOCS_DIR.
+    """
     try:
         # 检查 DOCS_DIR 是否存在且为目录
         if not os.path.isdir(DOCS_DIR):
@@ -87,7 +96,17 @@ class ValidityCheckRequest(BaseModel):
 
 
 async def test_process_files(files: List[UploadFile] = File(...)) -> Dict[str, Dict[str, Any]]:
-    """测试process_files函数并返回结构化数据"""
+    """
+    Process a list of uploaded files asynchronously and return their structured data.
+    
+    Calls the external `process_files` function to process the provided files, validates the response, saves the results and structured data to disk, and returns the structured data for further use.
+    
+    Parameters:
+        files (List[UploadFile]): List of files to be processed.
+    
+    Returns:
+        Dict[str, Dict[str, Any]]: Structured data extracted from the processed files.
+    """
     create_output_dir()
 
     if not files:
@@ -115,7 +134,12 @@ async def test_process_files(files: List[UploadFile] = File(...)) -> Dict[str, D
     print(f"✅ 成功处理 {len(response.results)} 个文件")
     return response.data  # 返回结构化数据供后续测试使用
 async def load_structured_data() -> Dict[str, Dict[str, Any]]:
-    """从保存的文件中加载结构化数据"""
+    """
+    Load structured document data from the saved JSON results file.
+    
+    Returns:
+        A dictionary containing the structured data from the "data" field of the results file, or an empty dictionary if the file does not exist.
+    """
     if not os.path.exists(UPLOAD_RESULTS_FILE):
         print(f"文件 {UPLOAD_RESULTS_FILE} 不存在")
         return {}
@@ -127,7 +151,14 @@ async def load_structured_data() -> Dict[str, Dict[str, Any]]:
 
 
 async def test_check_validity(request: ValidityCheckRequest):
-    """测试check_documents_validity函数"""
+    """
+    Performs a validity check on documents within a specified date range and saves the results to a file.
+    
+    Parameters:
+        request (ValidityCheckRequest): The validity check request containing start and end dates and structured document data.
+    
+    The function calls the asynchronous `check_documents_validity` function with the provided request, writes the validity check results—including valid time range, valid patents, valid papers, and comparison statistics—to a results file, and prints the file location.
+    """
     create_output_dir()
 
     # 调用原函数
@@ -155,7 +186,11 @@ from datetime import datetime
 logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s")
 
 async def main():
-    """主测试函数"""
+    """
+    Main asynchronous test driver for processing document files and performing validity checks.
+    
+    This function orchestrates the end-to-end test workflow: it generates test files, processes them to obtain structured data, prompts the user for a date range, validates the input, constructs a validity check request, and executes the validity check. Errors at each stage are logged, and the function exits early if any step fails.
+    """
     # 1. 测试文件上传处理并获取结构化数据
     test_files = await generate_test_files()
     if not test_files:
@@ -207,7 +242,12 @@ async def main():
         return
 
 def parse_date(date_str: str) -> datetime:
-    """解析日期字符串为 datetime 对象"""
+    """
+    Parse a date string in "YYYY-MM-DD" format into a `datetime` object.
+    
+    Raises:
+        ValueError: If the input string is not in the correct format.
+    """
     try:
         return datetime.strptime(date_str, "%Y-%m-%d")
     except ValueError as e:

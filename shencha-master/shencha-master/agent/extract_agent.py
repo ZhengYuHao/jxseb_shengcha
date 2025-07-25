@@ -102,6 +102,21 @@ from typing import Dict, Any
 from aiohttp import ClientError  # 假设使用aiohttp实现send_async_request
 
 async def extract_info(text: str, doc_type: str) -> Dict[str, Any]:
+    """
+    Asynchronously extracts structured information from a patent or academic paper text using an external LLM API.
+    
+    Parameters:
+        text (str): The input document text to extract information from.
+        doc_type (str): The type of document ("专利" for patent or "论文" for paper).
+    
+    Returns:
+        Dict[str, Any]: A dictionary containing the extracted and validated information fields.
+    
+    Raises:
+        ValueError: If the API response format is invalid or required fields are missing.
+        ConnectionError: If there is a network error during the API call.
+        RuntimeError: For other unexpected errors during extraction.
+    """
     try:
         # 生成Prompt
         prompt = _generate_prompt(text, doc_type)
@@ -160,7 +175,19 @@ async def extract_info(text: str, doc_type: str) -> Dict[str, Any]:
         raise RuntimeError(f"信息提取失败: {str(e)}") from e
 
 def _generate_prompt(text: str, doc_type: str) -> str:
-    """生成Prompt逻辑抽离"""
+    """
+    Generate a prompt string for the language model to extract structured information from a patent or academic paper text.
+    
+    Parameters:
+        text (str): The input document text to extract information from.
+        doc_type (str): The type of document ("专利" for patent or "论文" for paper).
+    
+    Returns:
+        str: A prompt formatted for the specified document type, instructing the language model to extract required fields in JSON format.
+    
+    Raises:
+        ValueError: If an unsupported document type is provided.
+    """
     text_sample = text[:5000]
     if doc_type == '专利':
         return f"""
@@ -212,7 +239,9 @@ def _generate_prompt(text: str, doc_type: str) -> str:
         raise ValueError(f"不支持的文档类型: {doc_type}")
 
 def _validate_paper_fields(result: Dict[str, Any]) -> None:
-    """论文字段验证逻辑抽离"""
+    """
+    Ensure all required fields for an academic paper are present in the result dictionary, adding missing fields with "N/A".
+    """
     required_fields = [
         '标题', '作者', '期刊', 'year',
         'DOI', 'received_date', 'accepted_date', 'published_date'
@@ -222,7 +251,11 @@ def _validate_paper_fields(result: Dict[str, Any]) -> None:
             result[field] = "N/A"
 
 def _validate_patent_fields(result: Dict[str, Any]) -> None:
-    """专利字段验证逻辑抽离"""
+    """
+    Ensure all required patent fields are present in the result dictionary, adding missing fields with "N/A" as needed.
+    
+    Modifies the input dictionary in place to guarantee the presence of '专利号', '申请日期', '发明人', '受让人', and '授权日期' keys.
+    """
     required_fields = ['专利号', '申请日期', '发明人', '受让人']
     for field in required_fields:
         if field not in result:

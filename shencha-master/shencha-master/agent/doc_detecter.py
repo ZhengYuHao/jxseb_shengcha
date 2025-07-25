@@ -4,6 +4,18 @@ from llm.send_request import send_async_request
 import os
 
 async def detect_doc_type(text: str) -> str:
+    """
+    Classifies the type of a given text as "专利" (patent), "论文" (paper), or "其他" (other) using a language model API.
+    
+    Parameters:
+        text (str): The input text to classify. Must not be empty or whitespace only.
+    
+    Returns:
+        str: The detected document type—one of "专利", "论文", or "其他". Returns "其他" if classification fails or the result is unexpected.
+    
+    Raises:
+        ValueError: If the input text is empty or contains only whitespace.
+    """
     if not text or not text.strip():
         raise ValueError("Input text cannot be empty")
     

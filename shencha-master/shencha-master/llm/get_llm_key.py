@@ -6,10 +6,9 @@ import random
 
 def get_llm_key():
     """
-    从环境变量里读取 API Key 列表，然后随机返回一个。支持三种格式：
-      1. Python 列表风格（单引号）："['key1','key2','key3']"
-      2. JSON 列表风格（双引号）：'["key1","key2","key3"]'
-      3. 如果没有 OPENAI_KEY_LIST，则读取单个 OPENAI_KEY
+    Retrieve an OpenAI API key from environment variables, supporting multiple formats and fallback.
+    
+    Attempts to read and parse the `OPENAI_KEY_LIST` environment variable as a list of API keys, supporting JSON array, Python list syntax, or comma-separated string. Randomly selects and returns one key from the list. If `OPENAI_KEY_LIST` is missing, empty, or invalid, falls back to returning the value of `OPENAI_KEY`.
     """
     try:
         key_list_str = os.getenv("OPENAI_KEY_LIST")
