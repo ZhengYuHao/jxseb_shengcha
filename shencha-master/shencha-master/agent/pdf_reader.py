@@ -11,13 +11,9 @@ from llm.send_request import send_async_request
 
 async def pdf_text_reader(temp_file_path: str) -> str:
     """
-    异步处理 PDF 文件，提取文本内容。
-
-    Args:
-        temp_file_path (str): 临时文件路径。
-
-    Returns:
-        str: 提取的文本内容。
+    Asynchronously extracts and returns all text content from a PDF file at the specified path.
+    
+    If the file is not found, the exception is raised. Returns an empty string if text extraction fails for other reasons.
     """
     print(f"处理中: {temp_file_path}")
 
@@ -39,13 +35,13 @@ async def pdf_text_reader(temp_file_path: str) -> str:
 
 async def image_to_base64(image_path: str) -> str:
     """
-    将图片转换为 Base64 编码。
-
-    Args:
-        image_path (str): 图片路径。
-
+    Asynchronously converts an image file to a Base64-encoded string.
+    
+    Parameters:
+        image_path (str): Path to the image file to be encoded.
+    
     Returns:
-        str: Base64 编码的图片。
+        str: The Base64-encoded representation of the image.
     """
     async with aiofiles.open(image_path, "rb") as f:
         image_data = await f.read()
@@ -55,13 +51,15 @@ async def image_to_base64(image_path: str) -> str:
 
 async def extract_text_from_images(image_paths: list) -> str:
     """
-    使用 GPT 模型对图片进行 OCR 识别并提取文本。
-
-    Args:
-        image_paths (list): 图片路径列表。
-
+    Extracts text from a list of image files using a GPT-based OCR API.
+    
+    Each image is converted to Base64 and sent to a GPT-4.1 OCR endpoint, which returns the recognized text. All extracted text is concatenated and returned as a single string.
+    
+    Parameters:
+        image_paths (list): List of file paths to images for OCR processing.
+    
     Returns:
-        str: 提取的文本内容。
+        str: Concatenated text extracted from all provided images.
     """
     all_text = ""
     api_key = get_llm_key()
@@ -106,13 +104,13 @@ async def extract_text_from_images(image_paths: list) -> str:
 
 async def pdf_pic_reader(temp_file_path: str) -> str:
     """
-    异步处理 PDF 文件，转图片后使用 GPT 模型进行 OCR 识别并提取文本内容。
-
-    Args:
-        temp_file_path (str): PDF 文件路径。
-
+    Asynchronously extracts text from a PDF file by converting each page to an image and performing OCR using a GPT-based model.
+    
+    Parameters:
+        temp_file_path (str): Path to the PDF file to be processed.
+    
     Returns:
-        str: 提取的文本内容。
+        str: The extracted text content, or a failure message if extraction is unsuccessful.
     """
     print(f"处理中: {temp_file_path}")
 

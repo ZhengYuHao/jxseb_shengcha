@@ -52,7 +52,12 @@ class ProcessResponse(BaseModel):
 
 
 async def download_from_url(url: str, save_path: str) -> bool:
-    """下载文件并显示进度信息"""
+    """
+    Asynchronously downloads a file from a given URL to a specified local path.
+    
+    Returns:
+        bool: True if the download succeeds and the file is saved, False otherwise.
+    """
     try:
         print(f"⏳ 开始下载: {url}")
         print(f"📁 保存路径: {save_path}")
@@ -98,6 +103,12 @@ async def download_from_url(url: str, save_path: str) -> bool:
 
 
 def parse_date(date_str: str) -> Optional[datetime]:
+    """
+    Attempt to parse a date string into a datetime object using multiple common formats.
+    
+    Returns:
+        A datetime object if parsing succeeds, or None if the string does not match any supported format.
+    """
     formats = [
         "%Y-%m-%d", "%Y/%m/%d", "%Y年%m月%d日",
         "%Y.%m.%d", "%d-%m-%Y", "%d/%m/%Y",
@@ -112,6 +123,14 @@ def parse_date(date_str: str) -> Optional[datetime]:
 
 
 def check_validity(item: dict, start_date: str, end_date: str) -> bool:
+    """
+    Determine whether a document item falls within a specified date range based on its type and relevant date fields.
+    
+    For patents, checks if the authorization date (or application date if unavailable) is within the range. For papers, checks if the year (converted to January 1st of that year) is within the range. Returns False if required date fields are missing or invalid.
+    
+    Returns:
+        bool: True if the document is valid within the date range, otherwise False.
+    """
     try:
         start_dt = parse_date(start_date)
         end_dt = parse_date(end_date)
@@ -157,6 +176,14 @@ def check_validity(item: dict, start_date: str, end_date: str) -> bool:
 
 @app.post("/api/v1/process_files", response_model=ProcessResponse)
 async def process_files(files: List[UploadFile] = File(...)):
+    """
+    Processes uploaded files or URLs, extracts document information, and returns structured results.
+    
+    This asynchronous function accepts a list of uploaded files or URL descriptors, downloads or saves each file, extracts text from PDFs, detects document type (patent or paper), and retrieves structured information accordingly. If the document type is unrecognized, it attempts OCR-based extraction. Results and structured data are returned for each file.
+    
+    Returns:
+        ProcessResponse: Contains textual summaries and structured data for each processed file.
+    """
     temp_dir = tempfile.mkdtemp()
     results = {}
     structured_data = {}
@@ -306,6 +333,17 @@ async def process_files(files: List[UploadFile] = File(...)):
 
 @app.post("/api/v1/check_validity", response_model=ValidityCheckResponse)
 async def check_documents_validity(request: ValidityCheckRequest):
+    """
+    Checks the validity of patent and paper documents within a specified date range.
+    
+    Validates the input date range, then examines each patent and paper document to determine if its relevant date field falls within the range. Returns a detailed response including lists of valid documents, formatted summaries, date comparison results, and statistics.
+    
+    Raises:
+        HTTPException: If the date format is invalid or the start date is after the end date.
+    
+    Returns:
+        ValidityCheckResponse: Contains valid patents and papers, total valid count, time range, date comparison details, statistics, and formatted results.
+    """
     start_dt = parse_date(request.start_date)
     end_dt = parse_date(request.end_date)
 
